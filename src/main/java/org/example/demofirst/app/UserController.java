@@ -4,26 +4,31 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("/user")
 public class UserController {
 
-    private List<User> users = new ArrayList<>();
+    private final UserService userService;
+
+    // Constructor Injection
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     // GET - Get all users
     @GetMapping
     public List<User> getUsers() {
-        return users;
+        return userService.getUsers();
     }
 
-    // POST - Add user
+    // POST - Create user
     @PostMapping
-    public ResponseEntity<String> createUser(@RequestBody User user) {
+    public ResponseEntity<String> createUser(
+            @RequestBody User user) {
 
-        users.add(user);
+        userService.createUser(user);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -32,52 +37,32 @@ public class UserController {
 
     // PUT - Update user
     @PutMapping
-    public User updateUser(@RequestBody User user) {
+    public User updateUser(
+            @RequestBody User user) {
 
-        for (User u : users) {
-            if (u.getId() == user.getId()) {
-
-                u.setName(user.getName());
-                u.setEmail(user.getEmail());
-
-                return u;
-            }
-        }
-
-        return null;
+        return userService.updateUser(user);
     }
 
     // DELETE - Delete user
     @DeleteMapping("/{id}")
-    public String deleteUser(@PathVariable int id) {
+    public String deleteUser(
+            @PathVariable int id) {
 
-        boolean removed = users.removeIf(u -> u.getId() == id);
+        userService.deleteUser(id);
 
-        if (removed) {
-            return "User deleted successfully";
-        }
-
-        return "User not found";
+        return "User deleted successfully";
     }
 
+    // SEARCH - Search by name and email
     @GetMapping("/search")
     public List<User> searchUser(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String email) {
 
-        List<User> result = new ArrayList<>();
-
-        for (User u : users) {
-
-            if ((name == null || u.getName().equalsIgnoreCase(name))
-                    && (email == null || u.getEmail().equalsIgnoreCase(email))) {
-
-                result.add(u);
-            }
-        }
-
-        return result;
+        return userService.searchUser(name, email);
     }
+
+    // INFO - PathVariable + RequestParam + RequestHeader
     @GetMapping("/info/{id}")
     public String getInfo(
             @PathVariable int id,
